@@ -16,3 +16,5 @@
 /cf-shared-apigwv2
 /.idea/
 /.aws-sam/
+
+.DS_Store

@@ -1,4 +1,4 @@
-package main
+package cf
 
 import (
 	"encoding/json"
@@ -58,29 +58,43 @@ type Permission struct {
 	Properties PermissionProperties `json:"Properties"`
 }
 
-func NewPermission(funName string, event FunctionEvent) (string, []byte, error) {
-	permission := Permission{
-		Type: "AWS::Lambda::Permission",
-		Properties: PermissionProperties{
-			Action:       "lambda:InvokeFunction",
-			FunctionName: jsonRef(funName),
-			Principal:    "apigateway.amazonaws.com",
-			SourceArn:    sourceArn(event),
+type permissionBuilder struct {
+	fnName     string
+	event      *SharedHttpApiEvent
+	permission *Permission
+}
+
+func NewPermissionBuilder(fnName string, event *SharedHttpApiEvent) ResourceBuilder {
+	return &permissionBuilder{
+		fnName: fnName,
+		event:  event,
+		permission: &Permission{
+			Type: "AWS::Lambda::Permission",
+			Properties: PermissionProperties{
+				Action:       "lambda:InvokeFunction",
+				FunctionName: FunctionNameRef(fnName),
+				Principal:    "apigateway.amazonaws.com",
+				SourceArn:    SourceArn(event),
+			},
 		},
 	}
-	json, err := json.Marshal(permission)
-	return getPermissionName(funName, event), json, err
 }
 
-func getPermissionName(funName string, event FunctionEvent) string {
-	return fmt.Sprintf("%s%sPermission", funName, event.Name)
+// Marshal Permission ResourceKey to JSON
+func (p *permissionBuilder) JSON() ([]byte, error) {
+	return json.Marshal(p.permission)
 }
 
-func jsonRef(name string) json.RawMessage {
+// Get Integration ResourceKey Name
+func (p *permissionBuilder) Name() string {
+	return fmt.Sprintf("%s%sPermission", p.fnName, p.event.Name)
+}
+
+func FunctionNameRef(name string) json.RawMessage {
 	return []byte(fmt.Sprintf(`{"Ref": "%s"}`, name))
 }
 
-func sourceArn(event FunctionEvent) json.RawMessage {
+func SourceArn(event *SharedHttpApiEvent) json.RawMessage {
 	return []byte(fmt.Sprintf(`
 	{
 		"Fn::Sub": [
@@ -94,13 +108,13 @@ func sourceArn(event FunctionEvent) json.RawMessage {
 	`, arn(event), event.SharedHttpApi.ApiId))
 }
 
-func arn(event FunctionEvent) string {
+func arn(event *SharedHttpApiEvent) string {
 	method := parseHttpMethod(event)
 	path := parsePath(event)
 	return fmt.Sprintf("arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${__ApiId__}/${__Stage__}/%s%s", method, path)
 }
 
-func parsePath(event FunctionEvent) string {
+func parsePath(event *SharedHttpApiEvent) string {
 	path := strings.ToLower(event.SharedHttpApi.Path)
 	if !strings.HasPrefix(path, "/") {
 		path = "/" + path
@@ -116,7 +130,7 @@ func parsePath(event FunctionEvent) string {
 	return path
 }
 
-func parseHttpMethod(event FunctionEvent) string {
+func parseHttpMethod(event *SharedHttpApiEvent) string {
 	switch strings.ToUpper(event.SharedHttpApi.Method) {
 	case "":
 		fallthrough

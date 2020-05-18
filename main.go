@@ -1,34 +1,26 @@
 package main
 
 import (
+	l "github.com/4-cube/cf-shared-apigwv2/pkg/lambda"
+	"github.com/4-cube/cf-shared-apigwv2/x"
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
-func handler(input MacroInput) (*MacroOutput, error) {
-	macro := NewMacro(input.Fragment)
+func handler(r l.MacroRequest) (*l.MacroResponse, error) {
+	macro := NewMacro(r.Fragment, x.NewLogger())
 	fragment, err := macro.ProcessFragment()
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &MacroOutput{
-		Status:    MacroOutputStatusSuccess,
-		RequestId: input.RequestId,
+	return &l.MacroResponse{
+		Status:    l.MacroOutputStatusSuccess,
+		RequestId: r.RequestId,
 		Fragment:  fragment,
 	}, nil
 }
 
 func main() {
-
-	//json, err := ioutil.ReadFile("./test-templates/simple-shared-http-sam-import-value.json")
-	//if err != nil {
-	//	panic("Can't load JSON template")
-	//}
-	//
-	//macro := NewMacro(json)
-	//
-	//macro.ProcessFragment()
-
 	lambda.Start(handler)
 }

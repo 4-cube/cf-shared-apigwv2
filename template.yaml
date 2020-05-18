@@ -18,12 +18,6 @@ Resources:
     Properties:
       Name: SharedApiGatewayV2
       FunctionName: !Ref SharedApiGatewayV2MacroFunction
-      LogGroupName: !Ref MacroLogs
-  MacroLogs:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: macro/cf-shared-apigwv2
-      RetentionInDays: 7
 
 Outputs:
   SharedApiGatewayV2MacroFunction:

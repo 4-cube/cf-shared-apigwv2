@@ -1,11 +1,11 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
+	"github.com/4-cube/cf-shared-apigwv2/pkg/cf"
 	"github.com/buger/jsonparser"
 	"github.com/pkg/errors"
-	"log"
+	"github.com/sirupsen/logrus"
 )
 
 type Macro interface {
@@ -13,87 +13,122 @@ type Macro interface {
 }
 
 type macro struct {
-	fragment  json.RawMessage
-	functions map[string][]FunctionEvent
+	fragment       json.RawMessage
+	log            *logrus.Logger
+	functionEvents map[string][]*cf.SharedHttpApiEvent
 }
 
-func NewMacro(fragment json.RawMessage) Macro {
+func NewMacro(fragment json.RawMessage, log *logrus.Logger) Macro {
 	return &macro{
-		fragment:  fragment,
-		functions: make(map[string][]FunctionEvent),
+		fragment:       fragment,
+		log:            log,
+		functionEvents: make(map[string][]*cf.SharedHttpApiEvent),
 	}
 }
 
 func (m *macro) ProcessFragment() ([]byte, error) {
 	err := m.findFunctions()
 	if err != nil {
+		m.log.Errorln(err)
 		return nil, err
 	}
 
-	if len(m.functions) == 0 {
-		log.Println("Template doesn't contain any Resource of type AWS::Serverless::Function that are using SharedHttpApi Event Type")
+	if len(m.functionEvents) == 0 {
+		m.log.Warn("Template doesn't contain any Resource of type AWS::Serverless::Function that is using SharedHttpApi Event Type")
 		return m.fragment, nil
 	}
-	for name, events := range m.functions {
+
+	for fnName, events := range m.functionEvents {
+		m.deleteFunctionEvents(fnName)
 		for _, event := range events {
-			err := m.addPermissions(name, event)
+			err := m.createPermission(fnName, event)
 			if err != nil {
 				return nil, err
 			}
-			err = m.addIntegrationAndRoute(name, event)
+			err = m.createIntegrationAndRoute(fnName, event)
 			if err != nil {
 				return nil, err
 			}
 		}
-		m.deleteFunctionEvents(name)
 	}
-	log.Println(string(prettyPrint(m.fragment)))
 	return m.fragment, nil
 }
 
-func (m *macro) addPermissions(funName string, event FunctionEvent) error {
-	name, p, err := NewPermission(funName, event)
-	if err == nil {
-		m.fragment, err = jsonparser.Set(m.fragment, p, "Resources", name)
+func (m *macro) createPermission(fnName string, event *cf.SharedHttpApiEvent) error {
+	b := cf.NewPermissionBuilder(fnName, event)
+	m.log.Infof("Creating Resource %s", b.Name())
+	res, err := b.JSON()
+	if err != nil {
+		m.log.Errorln(err)
+		return errors.Wrap(err, "creating permission resource failed")
 	}
-	return err
+	m.fragment, err = jsonparser.Set(m.fragment, res, cf.ResourceKey, b.Name())
+	if err != nil {
+		m.log.Errorln(err)
+		return errors.Wrap(err, "adding permission resource failed")
+	}
+	return nil
 }
 
-func (m *macro) addIntegrationAndRoute(funName string, event FunctionEvent) error {
-	integrationName, i, err := NewIntegration(funName, event)
-	if err == nil {
-		m.fragment, err = jsonparser.Set(m.fragment, i, "Resources", integrationName)
+func (m *macro) createIntegrationAndRoute(fnName string, event *cf.SharedHttpApiEvent) error {
+	ib := cf.NewIntegrationBuilder(fnName, event)
+
+	m.log.Infof("Creating Resource %s", ib.Name())
+
+	ires, err := ib.JSON()
+	if err != nil {
+		m.log.Errorln(err)
+		return errors.Wrap(err, "creating integration resource failed")
 	}
-	routeName, r, err := NewRoute(funName, integrationName, event)
-	if err == nil {
-		m.fragment, err = jsonparser.Set(m.fragment, r, "Resources", routeName)
+
+	m.fragment, err = jsonparser.Set(m.fragment, ires, cf.ResourceKey, ib.Name())
+	if err != nil {
+		m.log.Errorln(err)
+		return errors.Wrap(err, "adding integration resource failed")
 	}
-	return err
+
+	rb := cf.NewRouteBuilder(fnName, ib.Name(), event)
+
+	m.log.Infof("Creating Resource %s", rb.Name())
+
+	rres, err := rb.JSON()
+	if err != nil {
+		m.log.Errorln(err)
+		return errors.Wrap(err, "creating route resource failed")
+	}
+
+	m.fragment, err = jsonparser.Set(m.fragment, rres, cf.ResourceKey, rb.Name())
+	if err != nil {
+		m.log.Errorln(err)
+		return errors.Wrap(err, "adding route resource failed")
+	}
+
+	return nil
 }
 
-func (m *macro) deleteFunctionEvents(funName string) {
-	m.fragment = jsonparser.Delete(m.fragment, "Resources", funName, "Properties", "Events")
+func (m *macro) deleteFunctionEvents(fnName string) {
+	m.fragment = jsonparser.Delete(m.fragment, cf.ResourceKey, fnName, cf.PropertiesKey, cf.EventsKey)
 }
 
 // Find all AWS::Serverless::Function that are using SharedHttpApi Event type
 func (m *macro) findFunctions() error {
-	resources, _, _, err := jsonparser.Get(m.fragment, "Resources")
+	resources, _, _, err := jsonparser.Get(m.fragment, cf.ResourceKey)
 
 	err = jsonparser.ObjectEach(resources, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
-		rt, err := jsonparser.GetString(value, "Type")
+		rt, err := jsonparser.GetString(value, cf.TypeKey)
 		if err != nil {
 			return err
 		}
-		if rt != "AWS::Serverless::Function" {
+		if rt != cf.FunctionResourceType {
 			return nil
 		}
 
-		events, err := getSharedHttpApiEvents(value)
+		events, err := findEvents(value)
 		if err != nil {
 			return err
 		}
 		if len(events) > 0 {
-			m.functions[string(key)] = events
+			m.addFunctionEvents(string(key), events)
 		}
 		return nil
 	})
@@ -103,46 +138,48 @@ func (m *macro) findFunctions() error {
 	return nil
 }
 
-// Check if AWS::Serverless::Function is having Events of Type: SharedHttpApi
-func getSharedHttpApiEvents(function []byte) ([]FunctionEvent, error) {
-	events, _, _, err := jsonparser.Get(function, "Properties", "Events")
+// Find all of AWS::Serverless::Function Events of Type: SharedHttpApi
+func findEvents(function []byte) ([]*cf.SharedHttpApiEvent, error) {
+	events, _, _, err := jsonparser.Get(function, cf.PropertiesKey, cf.EventsKey)
 	if err != nil {
 		return nil, err
 	}
-	var functionEvents []FunctionEvent
+
+	var httpApiEvents []*cf.SharedHttpApiEvent
 
 	err = jsonparser.ObjectEach(events, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
-		et, err := jsonparser.GetString(value, "Type")
+		et, err := jsonparser.GetString(value, cf.TypeKey)
 		if err != nil {
 			return err
 		}
-		if et == "SharedHttpApi" {
-			//json.Unmarshal()
-			props, _, _, err := jsonparser.Get(value, "Properties")
+		if et == cf.SharedHttpApiType {
+			httpApiEvent, err := unmarshalEvent(string(key), value)
 			if err != nil {
 				return err
 			}
-			var sharedHttpApi SharedHttpApi
-			err = json.Unmarshal(props, &sharedHttpApi)
-			if err != nil {
-				return err
-			}
-			functionEvents = append(functionEvents, FunctionEvent{
-				Name:          string(key),
-				SharedHttpApi: sharedHttpApi,
-			})
+			httpApiEvents = append(httpApiEvents, httpApiEvent)
 		}
 		return nil
 	})
-	return functionEvents, nil
+	return httpApiEvents, nil
 }
 
-func prettyPrint(b []byte) []byte {
-	var out bytes.Buffer
-	err := json.Indent(&out, b, "", "  ")
+func unmarshalEvent(key string, j []byte) (*cf.SharedHttpApiEvent, error) {
+	props, _, _, err := jsonparser.Get(j, cf.PropertiesKey)
 	if err != nil {
-		log.Println(err)
-		return nil
+		return nil, err
 	}
-	return out.Bytes()
+	var httpApi cf.SharedHttpApi
+	err = json.Unmarshal(props, &httpApi)
+	if err != nil {
+		return nil, err
+	}
+	return &cf.SharedHttpApiEvent{
+		Name:          key,
+		SharedHttpApi: httpApi,
+	}, nil
+}
+
+func (m *macro) addFunctionEvents(fnName string, events []*cf.SharedHttpApiEvent) {
+	m.functionEvents[fnName] = events
 }
