@@ -1,0 +1,106 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Transform": [
+    "AWS::Serverless-2016-10-31"
+  ],
+  "Description": "sam-app\nSample SAM Template for sam-app\n",
+  "Globals": {
+    "Function": {
+      "Timeout": 5
+    }
+  },
+  "Resources": {
+    "HelloWorldFunction": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "CodeUri": "hello-world/",
+        "Handler": "hello-world",
+        "Runtime": "go1.x",
+        "Tracing": "Active",
+        "Environment": {
+          "Variables": {
+            "PARAM1": "VALUE"
+          }
+        }
+      }
+    },
+    "HelloWorldFunctionCatchAllPermission": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Ref": "HelloWorldFunction"
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Sub": [
+            "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${__ApiId__}/${__Stage__}/*/hello/*",
+            {
+              "__Stage__": "*",
+              "__ApiId__": {
+                "Fn::ImportValue": "http-apigw-HttpApi"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "HelloWorldFunctionCatchAllIntegration": {
+      "Type": "AWS::ApiGatewayV2::Integration",
+      "Properties": {
+        "ApiId": {
+          "Fn::ImportValue": "http-apigw-HttpApi"
+        },
+        "IntegrationMethod": "POST",
+        "IntegrationType": "AWS_PROXY",
+        "IntegrationUri": {
+          "Fn::Sub": "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${HelloWorldFunction.Arn}/invocations"
+        },
+        "PayloadFormatVersion": "2.0"
+      }
+    },
+    "HelloWorldFunctionCatchAllRoute": {
+      "Type": "AWS::ApiGatewayV2::Route",
+      "DependsOn": [
+        "HelloWorldFunctionCatchAllIntegration"
+      ],
+      "Properties": {
+        "ApiId": {
+          "Fn::ImportValue": "http-apigw-HttpApi"
+        },
+        "RouteKey": "ANY /hello/{proxy+}",
+        "Target": {
+          "Fn::Join": [
+            "/",
+            [
+              "integrations",
+              {
+                "Ref": "HelloWorldFunctionCatchAllIntegration"
+              }
+            ]
+          ]
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "HelloWorldFunction": {
+      "Description": "First Lambda Function ARN",
+      "Value": {
+        "Fn::GetAtt": [
+          "HelloWorldFunction",
+          "Arn"
+        ]
+      }
+    },
+    "HelloWorldFunctionIamRole": {
+      "Description": "Implicit IAM Role created for Hello World function",
+      "Value": {
+        "Fn::GetAtt": [
+          "HelloWorldFunctionRole",
+          "Arn"
+        ]
+      }
+    }
+  }
+}

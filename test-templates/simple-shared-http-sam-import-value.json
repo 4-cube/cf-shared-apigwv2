@@ -1,6 +1,7 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
     "Transform": [
+        "SharedApiGatewayV2",
         "AWS::Serverless-2016-10-31"
     ],
     "Description": "sam-app\nSample SAM Template for sam-app\n",
@@ -21,7 +22,7 @@
                     "CatchAll": {
                         "Type": "SharedHttpApi",
                         "Properties": {
-                            "Path": "/hello/{proxy+}",
+                            "Path": "/{proxy+}",
                             "Method": "ANY",
                             "ApiId": {
                                 "Fn::ImportValue": "http-apigw-HttpApi"

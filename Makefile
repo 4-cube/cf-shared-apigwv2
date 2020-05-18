@@ -1,6 +1,6 @@
 #SHELL=/bin/bash -o pipefail
 
-.PHONY: deps clean build deploy bucket
+.PHONY: deps clean test build deploy bucket
 
 S3_BUCKET=4-cube-serverless-projects
 
@@ -9,8 +9,11 @@ deps:
 
 clean: 
 	rm -rf ./cf-shared-apigwv2
-	
-build: deps
+
+test:
+	go test ./...
+
+build: deps test
 	GOOS=linux GOARCH=amd64 go build -o ./cf-shared-apigwv2 .
 	sam build
 
