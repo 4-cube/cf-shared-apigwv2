@@ -1,0 +1,52 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  http-api-gateway
+
+  Sample SAM Template for shared API Gateway V2
+
+Resources:
+  HttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      AccessLogSettings:
+        DestinationArn: !GetAtt AccessLogs.Arn
+        Format:
+          !Join
+          - ','
+          - - '{"requestId": "$context.requestId"'
+            - '"ip": "$context.identity.sourceIp"'
+            - '"routeKey": "$context.routeKey"'
+            - '"protocol": "$context.protocol"'
+            - '"method": "$context.httpMethod"'
+            - '"path": "$context.path"'
+            - '"requestTime": "$context.requestTime"'
+            - '"integrationLatency": "$context.integrationLatency"'
+            - '"integrationStatus": "$context.integrationStatus"'
+            - '"integrationErrorMessage": "$context.integrationErrorMessage"'
+            - '"responseLatency": "$context.responseLatency"'
+            - '"responseLength": "$context.responseLength"'
+            - '"status": "$context.status"'
+            - '"userAgent": "$context.identity.userAgent"}'
+  AccessLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: http-api-gateway/access-logs
+      RetentionInDays: 7
+
+Outputs:
+  HttpApi:
+    Description: "API Gateway Resource"
+    Value: !Ref HttpApi
+    Export:
+      Name: !Sub "${AWS::StackName}-HttpApi"
+  HttpApiAccessLogGroup:
+    Description: HttpApi Access Log Group ARN
+    Value: !GetAtt AccessLogs.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-AccessLogs-Arn"
+  HttpApiUrl:
+    Description: "API Gateway Endpoint URL"
+    Value: !Sub "https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com"
+    Export:
+      Name: !Sub "${AWS::StackName}-HttpApi-Url"

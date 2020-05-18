@@ -20,40 +20,50 @@ projects.
 make build
 make deploy
 ```
+###### There are some hardcoded values in Makefile - please review Makefile before running it.
+
 
 ## Usage
+First, you need to have already provisioned ApiGatewayV2 instance.
+To be able to reference this Api Gateway instance, you `must export Resource Reference`.
+ 
+```yaml
+Outputs:
+  HttpApi:
+    Description: "API Gateway Resource"
+    Value: !Ref HttpApi
+    Export:
+      Name: !Sub "${AWS::StackName}-HttpApi"
+```
+You can find example in [`demo-apigwv2.yaml`](/demo-apigwv2.yaml). 
 
-Usage is pretty simple. You can see a complete example in [`demo.yaml`](/demo.yaml).
-There are two parts to it. First, you need to add a reference to the macro in
-the list of transforms in your template. 
+Secondly, you need to add a reference to the macro in the list of transforms in your template. 
 
 Replace this:
+```yaml
+Transform: "AWS::Serverless-2016-10-31"
+```
 
-    Transform: "AWS::Serverless-2016-10-31"
-    
 With this:
+```yaml
+Transform: ["SharedApiGatewayV2", "AWS::Serverless-2016-10-31"]
+```
 
-    Transform: ["SharedApiGatewayV2", "AWS::Serverless-2016-10-31"]
+Note that the order matters - `SharedApiGatewayV2` needs to come first. 
 
-Note that the order matters - `SharedApiGatewayV2` needs to come first. Next, you can now
-use a new event type. Here's what that looks like:
+Finally, you can use a new event (`SharedHttpApi`) type. 
 
 ```yaml
-  Function:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: index.handler
-      Runtime: python3.7
-      Events:
-        hello:
-          Type: SharedHttpApi
-          Properties:
-            Type: SharedHttpApi
-            Properties:
-              Path: /hello/{proxy+}
-              Method: ANY
-              ApiId: !ImportValue http-apigw-HttpApi #Replace http-apigw-HttpApi with your own
+  Events:
+    CatchAll: #this is just event name
+      Type: SharedHttpApi #We specify new event type
+      Properties:
+        Path: /{proxy+}
+        Method: ANY
+        ApiId: !ImportValue http-apigw-HttpApi #Reference shared Api Gateway
 ```
+
+You can see a complete example in [`demo.yaml`](/demo.yaml).
 
 The complete set of properties for the `SharedHttpApi` event type are:
 ApiId                json.RawMessage
@@ -63,15 +73,14 @@ ApiId                json.RawMessage
 	PayloadFormatVersion string
 	TimeoutInMillis      int64
 
-| Property name | Description                                                  |
-| ------------- | ------------------------------------------------------------ |
-| `ApiId`       | Type: String. **Required**. Should be the import value of an shared ApiGateway (Fn:ImportValue |
-| `Method`      | Type: String. One of: GET, POST, PUT, ANY |
-| `Path`        | Type: |
-| `PayloadFormatVersion`  | Type: String.  |
-| `TimeoutInMillis` | Type: Integer |
-| `Auth` | Type 
-
+| Property name             | Description                                                                   |
+| ------------------------- | ----------------------------------------------------------------------------- |
+| `ApiId`                   | Type: String. **Required**. Should be `Fn:ImportValue shared-api-gateway-ref` |
+| `Method`                  | Type: String. If empty or omitted `ANY` will be used                          |
+| `Path`                    | Type: String.                                                                 |
+| `PayloadFormatVersion`    | Type: String. Default value: `2.0`                                            |
+| `TimeoutInMillis`         | Type: Integer. Default: `5000`                                                |
+| `Auth` | Type: Auth. **Currently not implemented.**                                                       |
 
 [sam]: https://github.com/awslabs/serverless-application-model
 [gh-issue-alb]: https://github.com/awslabs/serverless-application-model/issues/721
