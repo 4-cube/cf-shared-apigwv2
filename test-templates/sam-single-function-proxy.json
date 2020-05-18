@@ -1,0 +1,171 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Outputs": {
+    "HelloWorldAPI": {
+      "Description": "API Gateway endpoint URL for Prod environment for First Function",
+      "Value": {
+        "Fn::Sub": "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
+      }
+    },
+    "HelloWorldFunctionIamRole": {
+      "Description": "Implicit IAM Role created for Hello World function",
+      "Value": {
+        "Fn::GetAtt": [
+          "HelloWorldFunctionRole",
+          "Arn"
+        ]
+      }
+    },
+    "HelloWorldFunction": {
+      "Description": "First Lambda Function ARN",
+      "Value": {
+        "Fn::GetAtt": [
+          "HelloWorldFunction",
+          "Arn"
+        ]
+      }
+    }
+  },
+  "Description": "sam-app\nSample SAM Template for sam-app\n",
+  "Resources": {
+    "ServerlessHttpApiApiGatewayDefaultStage": {
+      "Type": "AWS::ApiGatewayV2::Stage",
+      "Properties": {
+        "ApiId": {
+          "Ref": "ServerlessHttpApi"
+        },
+        "AutoDeploy": true,
+        "StageName": "$default",
+        "Tags": {
+          "httpapi:createdBy": "SAM"
+        }
+      }
+    },
+    "HelloWorldFunctionRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Action": [
+                "sts:AssumeRole"
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              }
+            }
+          ]
+        },
+        "ManagedPolicyArns": [
+          "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          "arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess"
+        ],
+        "Tags": [
+          {
+            "Value": "SAM",
+            "Key": "lambda:createdBy"
+          }
+        ]
+      }
+    },
+    "HelloWorldFunctionCatchAllPermission": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com",
+        "FunctionName": {
+          "Ref": "HelloWorldFunction"
+        },
+        "SourceArn": {
+          "Fn::Sub": [
+            "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${__ApiId__}/${__Stage__}/*/hello/*",
+            {
+              "__Stage__": "*",
+              "__ApiId__": {
+                "Ref": "ServerlessHttpApi"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "HelloWorldFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "TracingConfig": {
+          "Mode": "Active"
+        },
+        "Code": {
+          "S3Bucket": "aws-sam-cli-managed-default-samclisourcebucket-kg6qg22u8h5j",
+          "S3Key": "test/c15076219d9a934bd45a2c4fcd806cf2"
+        },
+        "Tags": [
+          {
+            "Value": "SAM",
+            "Key": "lambda:createdBy"
+          }
+        ],
+        "Environment": {
+          "Variables": {
+            "PARAM1": "VALUE"
+          }
+        },
+        "Handler": "hello-world",
+        "Role": {
+          "Fn::GetAtt": [
+            "HelloWorldFunctionRole",
+            "Arn"
+          ]
+        },
+        "Timeout": 5,
+        "Runtime": "go1.x"
+      }
+    },
+    "ServerlessHttpApi": {
+      "Type": "AWS::ApiGatewayV2::Api",
+      "Properties": {
+        "Body": {
+          "info": {
+            "version": "1.0",
+            "title": {
+              "Ref": "AWS::StackName"
+            }
+          },
+          "paths": {
+            "/hello/{proxy+}": {
+              "x-amazon-apigateway-any-method": {
+                "x-amazon-apigateway-integration": {
+                  "httpMethod": "POST",
+                  "type": "aws_proxy",
+                  "uri": {
+                    "Fn::Sub": "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${HelloWorldFunction.Arn}/invocations"
+                  },
+                  "payloadFormatVersion": "2.0"
+                },
+                "responses": {},
+                "parameters": [
+                  {
+                    "required": true,
+                    "name": "proxy+",
+                    "in": "path"
+                  }
+                ]
+              }
+            }
+          },
+          "openapi": "3.0.1",
+          "tags": [
+            {
+              "name": "httpapi:createdBy",
+              "x-amazon-apigateway-tag-value": "SAM"
+            }
+          ]
+        }
+      }
+    }
+  }
+}
