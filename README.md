@@ -89,3 +89,6 @@ ApiId                json.RawMessage
 [sam-alb]: https://github.com/glassechidna/sam-alb
 [macro]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/template-macros.html
 
+We want to thank [aidansteele](https://github.com/aidansteele) for his work on [sam-alb](https://github.com/glassechidna/sam-alb)
+since we used sam-alb project as an inspiration.
+ 
