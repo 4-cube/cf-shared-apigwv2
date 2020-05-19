@@ -10,7 +10,7 @@ There are several issues that are IMHO inconvenient:
 * Really annoying: [HttpApi event type does not work with local start-api][gh-issue-start-local]
 
 We created this project in order to enable using externally defined API gateway.
-Currently, we only supports ApiGatewayV2 (HttpApi). 
+Currently, we only support ApiGatewayV2 (HttpApi). 
 You can learn more about ClodFormation Macros [here][macro].
   
 ## Installation
@@ -37,7 +37,7 @@ Outputs:
 ```
 You can find example in [`demo-apigwv2.yaml`](/demo-apigwv2.yaml). 
 
-Secondly, you need to add a reference to the macro in the list of transforms in your template. 
+Second, you need to add a reference to the macro in the list of transforms in your template. 
 
 Replace this:
 ```yaml
@@ -51,7 +51,7 @@ Transform: ["SharedApiGatewayV2", "AWS::Serverless-2016-10-31"]
 
 Note that the order matters - `SharedApiGatewayV2` needs to come first. 
 
-Finally, you can use an modified event type (`HttpApi`) type, but you must configure value of `ImportApiId`. 
+Finally, you can use a modified event type (`HttpApi`) type, but you must configure value of `ImportApiId`. 
 
 ```yaml
   Events:
