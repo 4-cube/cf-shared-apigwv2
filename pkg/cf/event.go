@@ -19,10 +19,10 @@ type Auth struct {
 
 // The object describing an event source with type HttpApi.
 // see: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-function-httpapi.html
-// Only difference between SAM HttpApi is that we are expecting ApiId to be Fn::ImportValue intrinsic function
+// Only difference between SAM HttpApi is that we are expecting ImportApiId to be Fn::ImportValue intrinsic function
 type HttpApi struct {
 	// Shared API Gateway ID - expected to be: ExportedApiId
-	ApiId string `json:"ApiId"`
+	ImportApiId string `json:"ImportApiId"`
 
 	// Auth configuration for this specific Api+Path+Method.
 	// Useful for overriding the API's DefaultAuthorizer or setting auth config on an individual path when no DefaultAuthorizer is specified.
@@ -52,5 +52,5 @@ func (e *HttpApiEvent) RouteKey() string {
 }
 
 func (e *HttpApiEvent) FnImportApiId() json.RawMessage {
-	return []byte(fmt.Sprintf(`{"Fn::ImportValue": "%s"}`, e.HttpApi.ApiId))
+	return []byte(fmt.Sprintf(`{"Fn::ImportValue": "%s"}`, e.HttpApi.ImportApiId))
 }

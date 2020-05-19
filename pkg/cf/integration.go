@@ -9,7 +9,7 @@ import (
 {
   "Type" : "AWS::ApiGatewayV2::Integration",
   "Properties" : {
-      "ApiId" : String,
+      "ImportApiId" : String,
       "ConnectionId" : String,
       "ConnectionType" : String,
       "ContentHandlingStrategy" : String,
@@ -31,7 +31,7 @@ import (
 
 // The AWS::ApiGatewayV2::Integration resource creates a route for an API.
 type IntegrationProperties struct {
-	ApiId json.RawMessage `json:"ApiId,omitempty"`
+	ApiId json.RawMessage `json:"ImportApiId,omitempty"`
 
 	// Specifies the integration's HTTP method type.
 	// For some reason it should be POST

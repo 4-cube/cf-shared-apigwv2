@@ -23,7 +23,7 @@
             "Properties": {
               "Path": "/hello/{proxy+}",
               "Method": "ANY",
-              "ApiId": "http-apigw-HttpApi"
+              "ImportApiId": "http-apigw-HttpApi"
             }
           }
         },

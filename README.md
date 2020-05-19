@@ -51,7 +51,7 @@ Transform: ["SharedApiGatewayV2", "AWS::Serverless-2016-10-31"]
 
 Note that the order matters - `SharedApiGatewayV2` needs to come first. 
 
-Finally, you can use an existing event type (`HttpApi`) type, but you must configure value of `ApiId`. 
+Finally, you can use an modified event type (`HttpApi`) type, but you must configure value of `ImportApiId`. 
 
 ```yaml
   Events:
@@ -60,16 +60,16 @@ Finally, you can use an existing event type (`HttpApi`) type, but you must confi
       Properties:
         Path: /{proxy+}
         Method: ANY
-        ApiId: http-apigw-HttpApi #Reference shared Api Gateway - exact exported value from parent stack
+        ImportApiId: http-apigw-HttpApi #Reference shared Api Gateway - exact exported value from parent stack
 ```
 
 You can see a complete example in [`demo.yaml`](/demo.yaml).
 
-The complete set of properties for the `SharedHttpApi` event type are:
+The complete set of properties for the modified `HttpApi` event type are:
 
 | Property name             | Description                                                                   |
 | ------------------------- | ----------------------------------------------------------------------------- |
-| `ApiId`                   | Type: String. **Required**. Should be `shared-api-gateway-ref`                |
+| `ImportApiId`             | Type: String. **Required**. Should be `shared-api-gateway-ref`                |
 | `Method`                  | Type: String. If empty or omitted `ANY` will be used                          |
 | `Path`                    | Type: String.                                                                 |
 | `PayloadFormatVersion`    | Type: String. Default value: `2.0`                                            |

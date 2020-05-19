@@ -9,7 +9,7 @@ import (
 {
   "Type" : "AWS::ApiGatewayV2::Route",
   "Properties" : {
-      "ApiId" : String,
+      "ImportApiId" : String,
       "ApiKeyRequired" : Boolean,
       "AuthorizationScopes" : [ String, ... ],
       "AuthorizationType" : String,
@@ -33,7 +33,7 @@ type Route struct {
 }
 
 type RouteProperties struct {
-	ApiId json.RawMessage `json:"ApiId,omitempty"`
+	ApiId json.RawMessage `json:"ImportApiId,omitempty"`
 
 	//For HTTP APIs, valid values are NONE for open access, or JWT for using JSON Web Tokens.
 	AuthorizationType string `json:"AuthorizationType,omitempty"`
