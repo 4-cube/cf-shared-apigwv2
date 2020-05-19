@@ -15,11 +15,11 @@ Resources:
       Tracing: Active
       Events:
         CatchAll:
-          Type: SharedHttpApi
+          Type: HttpApi
           Properties:
+            ApiId: http-apigw-HttpApi
             Path: /{proxy+}
             Method: ANY
-            ApiId: !ImportValue http-apigw-HttpApi
 
 Outputs:
   HelloWorldFunction:

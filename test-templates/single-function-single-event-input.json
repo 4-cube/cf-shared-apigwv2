@@ -19,13 +19,11 @@
         "Tracing": "Active",
         "Events": {
           "CatchAll": {
-            "Type": "SharedHttpApi",
+            "Type": "HttpApi",
             "Properties": {
               "Path": "/hello/{proxy+}",
               "Method": "ANY",
-              "ApiId": {
-                "Fn::ImportValue": "http-apigw-HttpApi"
-              }
+              "ApiId": "http-apigw-HttpApi"
             }
           }
         },

@@ -49,11 +49,11 @@ type RouteProperties struct {
 type routeBuilder struct {
 	fnName  string
 	intName string
-	event   *SharedHttpApiEvent
+	event   *HttpApiEvent
 	route   *Route
 }
 
-func NewRouteBuilder(fnName string, intName string, event *SharedHttpApiEvent) ResourceBuilder {
+func NewRouteBuilder(fnName string, intName string, event *HttpApiEvent) ResourceBuilder {
 	return &routeBuilder{
 		fnName:  fnName,
 		intName: intName,
@@ -62,7 +62,7 @@ func NewRouteBuilder(fnName string, intName string, event *SharedHttpApiEvent) R
 			Type:      "AWS::ApiGatewayV2::Route",
 			DependsOn: []string{intName},
 			Properties: RouteProperties{
-				ApiId:    event.SharedHttpApi.ApiId,
+				ApiId:    event.FnImportApiId(),
 				RouteKey: event.RouteKey(),
 				Target:   IntegrationTarget(intName),
 			},

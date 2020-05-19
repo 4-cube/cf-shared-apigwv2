@@ -17,12 +17,12 @@ type Auth struct {
 	AuthorizationScopes []string `json:"AuthorizationScopes, omitempty"`
 }
 
-// The object describing an event source with type SharedHttpApi.
+// The object describing an event source with type HttpApi.
 // see: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-function-httpapi.html
 // Only difference between SAM HttpApi is that we are expecting ApiId to be Fn::ImportValue intrinsic function
-type SharedHttpApi struct {
-	// Shared API Gateway ID - expected to be: Fn::ImportValue ExportedApiId
-	ApiId json.RawMessage `json:"ApiId"`
+type HttpApi struct {
+	// Shared API Gateway ID - expected to be: ExportedApiId
+	ApiId string `json:"ApiId"`
 
 	// Auth configuration for this specific Api+Path+Method.
 	// Useful for overriding the API's DefaultAuthorizer or setting auth config on an individual path when no DefaultAuthorizer is specified.
@@ -42,11 +42,15 @@ type SharedHttpApi struct {
 	TimeoutInMillis int64 `json:"TimeoutInMillis,omitempty"`
 }
 
-type SharedHttpApiEvent struct {
-	Name          string
-	SharedHttpApi SharedHttpApi
+type HttpApiEvent struct {
+	Name    string
+	HttpApi HttpApi
 }
 
-func (e *SharedHttpApiEvent) RouteKey() string {
-	return fmt.Sprintf("%s %s", e.SharedHttpApi.Method, e.SharedHttpApi.Path)
+func (e *HttpApiEvent) RouteKey() string {
+	return fmt.Sprintf("%s %s", e.HttpApi.Method, e.HttpApi.Path)
+}
+
+func (e *HttpApiEvent) FnImportApiId() json.RawMessage {
+	return []byte(fmt.Sprintf(`{"Fn::ImportValue": "%s"}`, e.HttpApi.ApiId))
 }

@@ -60,11 +60,11 @@ type Permission struct {
 
 type permissionBuilder struct {
 	fnName     string
-	event      *SharedHttpApiEvent
+	event      *HttpApiEvent
 	permission *Permission
 }
 
-func NewPermissionBuilder(fnName string, event *SharedHttpApiEvent) ResourceBuilder {
+func NewPermissionBuilder(fnName string, event *HttpApiEvent) ResourceBuilder {
 	return &permissionBuilder{
 		fnName: fnName,
 		event:  event,
@@ -94,7 +94,7 @@ func FunctionNameRef(name string) json.RawMessage {
 	return []byte(fmt.Sprintf(`{"Ref": "%s"}`, name))
 }
 
-func SourceArn(event *SharedHttpApiEvent) json.RawMessage {
+func SourceArn(event *HttpApiEvent) json.RawMessage {
 	return []byte(fmt.Sprintf(`
 	{
 		"Fn::Sub": [
@@ -105,17 +105,17 @@ func SourceArn(event *SharedHttpApiEvent) json.RawMessage {
 	       }
 		]
 	}
-	`, arn(event), event.SharedHttpApi.ApiId))
+	`, arn(event), string(event.FnImportApiId())))
 }
 
-func arn(event *SharedHttpApiEvent) string {
+func arn(event *HttpApiEvent) string {
 	method := parseHttpMethod(event)
 	path := parsePath(event)
 	return fmt.Sprintf("arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${__ApiId__}/${__Stage__}/%s%s", method, path)
 }
 
-func parsePath(event *SharedHttpApiEvent) string {
-	path := strings.ToLower(event.SharedHttpApi.Path)
+func parsePath(event *HttpApiEvent) string {
+	path := strings.ToLower(event.HttpApi.Path)
 	if !strings.HasPrefix(path, "/") {
 		path = "/" + path
 	}
@@ -130,13 +130,13 @@ func parsePath(event *SharedHttpApiEvent) string {
 	return path
 }
 
-func parseHttpMethod(event *SharedHttpApiEvent) string {
-	switch strings.ToUpper(event.SharedHttpApi.Method) {
+func parseHttpMethod(event *HttpApiEvent) string {
+	switch strings.ToUpper(event.HttpApi.Method) {
 	case "":
 		fallthrough
 	case "ANY":
 		return "*"
 	default:
-		return strings.ToUpper(event.SharedHttpApi.Method)
+		return strings.ToUpper(event.HttpApi.Method)
 	}
 }

@@ -1,4 +1,4 @@
-package main
+package macro
 
 import (
 	"encoding/json"
@@ -15,14 +15,14 @@ type Macro interface {
 type macro struct {
 	fragment       json.RawMessage
 	log            *logrus.Logger
-	functionEvents map[string][]*cf.SharedHttpApiEvent
+	functionEvents map[string][]*cf.HttpApiEvent
 }
 
 func NewMacro(fragment json.RawMessage, log *logrus.Logger) Macro {
 	return &macro{
 		fragment:       fragment,
 		log:            log,
-		functionEvents: make(map[string][]*cf.SharedHttpApiEvent),
+		functionEvents: make(map[string][]*cf.HttpApiEvent),
 	}
 }
 
@@ -34,7 +34,7 @@ func (m *macro) ProcessFragment() ([]byte, error) {
 	}
 
 	if len(m.functionEvents) == 0 {
-		m.log.Warn("Template doesn't contain any Resource of type AWS::Serverless::Function that is using SharedHttpApi Event Type")
+		m.log.Warn("Template doesn't contain any Resource of type AWS::Serverless::Function that is using HttpApi Event Type")
 		return m.fragment, nil
 	}
 
@@ -54,7 +54,7 @@ func (m *macro) ProcessFragment() ([]byte, error) {
 	return m.fragment, nil
 }
 
-func (m *macro) createPermission(fnName string, event *cf.SharedHttpApiEvent) error {
+func (m *macro) createPermission(fnName string, event *cf.HttpApiEvent) error {
 	b := cf.NewPermissionBuilder(fnName, event)
 	m.log.Infof("Creating Resource %s", b.Name())
 	res, err := b.JSON()
@@ -70,7 +70,7 @@ func (m *macro) createPermission(fnName string, event *cf.SharedHttpApiEvent) er
 	return nil
 }
 
-func (m *macro) createIntegrationAndRoute(fnName string, event *cf.SharedHttpApiEvent) error {
+func (m *macro) createIntegrationAndRoute(fnName string, event *cf.HttpApiEvent) error {
 	ib := cf.NewIntegrationBuilder(fnName, event)
 
 	m.log.Infof("Creating Resource %s", ib.Name())
@@ -110,7 +110,7 @@ func (m *macro) deleteFunctionEvents(fnName string) {
 	m.fragment = jsonparser.Delete(m.fragment, cf.ResourceKey, fnName, cf.PropertiesKey, cf.EventsKey)
 }
 
-// Find all AWS::Serverless::Function that are using SharedHttpApi Event type
+// Find all AWS::Serverless::Function that are using HttpApi Event type
 func (m *macro) findFunctions() error {
 	resources, _, _, err := jsonparser.Get(m.fragment, cf.ResourceKey)
 
@@ -138,21 +138,21 @@ func (m *macro) findFunctions() error {
 	return nil
 }
 
-// Find all of AWS::Serverless::Function Events of Type: SharedHttpApi
-func findEvents(function []byte) ([]*cf.SharedHttpApiEvent, error) {
+// Find all of AWS::Serverless::Function Events of Type: HttpApi
+func findEvents(function []byte) ([]*cf.HttpApiEvent, error) {
 	events, _, _, err := jsonparser.Get(function, cf.PropertiesKey, cf.EventsKey)
 	if err != nil {
 		return nil, err
 	}
 
-	var httpApiEvents []*cf.SharedHttpApiEvent
+	var httpApiEvents []*cf.HttpApiEvent
 
 	err = jsonparser.ObjectEach(events, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
 		et, err := jsonparser.GetString(value, cf.TypeKey)
 		if err != nil {
 			return err
 		}
-		if et == cf.SharedHttpApiType {
+		if et == cf.HttpApiType {
 			httpApiEvent, err := unmarshalEvent(string(key), value)
 			if err != nil {
 				return err
@@ -164,22 +164,22 @@ func findEvents(function []byte) ([]*cf.SharedHttpApiEvent, error) {
 	return httpApiEvents, nil
 }
 
-func unmarshalEvent(key string, j []byte) (*cf.SharedHttpApiEvent, error) {
+func unmarshalEvent(key string, j []byte) (*cf.HttpApiEvent, error) {
 	props, _, _, err := jsonparser.Get(j, cf.PropertiesKey)
 	if err != nil {
 		return nil, err
 	}
-	var httpApi cf.SharedHttpApi
+	var httpApi cf.HttpApi
 	err = json.Unmarshal(props, &httpApi)
 	if err != nil {
 		return nil, err
 	}
-	return &cf.SharedHttpApiEvent{
-		Name:          key,
-		SharedHttpApi: httpApi,
+	return &cf.HttpApiEvent{
+		Name:    key,
+		HttpApi: httpApi,
 	}, nil
 }
 
-func (m *macro) addFunctionEvents(fnName string, events []*cf.SharedHttpApiEvent) {
+func (m *macro) addFunctionEvents(fnName string, events []*cf.HttpApiEvent) {
 	m.functionEvents[fnName] = events
 }

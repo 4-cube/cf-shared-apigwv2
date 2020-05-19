@@ -51,31 +51,25 @@ Transform: ["SharedApiGatewayV2", "AWS::Serverless-2016-10-31"]
 
 Note that the order matters - `SharedApiGatewayV2` needs to come first. 
 
-Finally, you can use a new event (`SharedHttpApi`) type. 
+Finally, you can use an existing event type (`HttpApi`) type, but you must configure value of `ApiId`. 
 
 ```yaml
   Events:
     CatchAll: #this is just event name
-      Type: SharedHttpApi #We specify new event type
+      Type: HttpApi
       Properties:
         Path: /{proxy+}
         Method: ANY
-        ApiId: !ImportValue http-apigw-HttpApi #Reference shared Api Gateway
+        ApiId: http-apigw-HttpApi #Reference shared Api Gateway - exact exported value from parent stack
 ```
 
 You can see a complete example in [`demo.yaml`](/demo.yaml).
 
 The complete set of properties for the `SharedHttpApi` event type are:
-ApiId                json.RawMessage
-	Auth                 HttpApiFunctionAuth
-	Method               string
-	Path                 string
-	PayloadFormatVersion string
-	TimeoutInMillis      int64
 
 | Property name             | Description                                                                   |
 | ------------------------- | ----------------------------------------------------------------------------- |
-| `ApiId`                   | Type: String. **Required**. Should be `Fn:ImportValue shared-api-gateway-ref` |
+| `ApiId`                   | Type: String. **Required**. Should be `shared-api-gateway-ref`                |
 | `Method`                  | Type: String. If empty or omitted `ANY` will be used                          |
 | `Path`                    | Type: String.                                                                 |
 | `PayloadFormatVersion`    | Type: String. Default value: `2.0`                                            |

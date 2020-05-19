@@ -61,23 +61,23 @@ type Integration struct {
 
 type integrationBuilder struct {
 	fnName      string
-	event       *SharedHttpApiEvent
+	event       *HttpApiEvent
 	integration *Integration
 }
 
-func NewIntegrationBuilder(fnName string, event *SharedHttpApiEvent) ResourceBuilder {
+func NewIntegrationBuilder(fnName string, event *HttpApiEvent) ResourceBuilder {
 	return &integrationBuilder{
 		fnName: fnName,
 		event:  event,
 		integration: &Integration{
 			Type: "AWS::ApiGatewayV2::Integration",
 			Properties: IntegrationProperties{
-				ApiId:                event.SharedHttpApi.ApiId,
+				ApiId:                event.FnImportApiId(),
 				IntegrationMethod:    "POST",
 				IntegrationType:      "AWS_PROXY",
 				IntegrationUri:       IntegrationUri(fnName),
 				PayloadFormatVersion: "2.0",
-				TimeoutInMillis:      event.SharedHttpApi.TimeoutInMillis,
+				TimeoutInMillis:      event.HttpApi.TimeoutInMillis,
 			},
 		},
 	}

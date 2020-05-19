@@ -1,4 +1,4 @@
-package main
+package macro
 
 import (
 	"github.com/sirupsen/logrus"
