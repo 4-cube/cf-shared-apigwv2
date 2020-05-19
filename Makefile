@@ -14,7 +14,7 @@ test:
 	go test ./...
 
 build: deps test
-	GOOS=linux GOARCH=amd64 go build -o ./cf-shared-apigwv2 .
+	GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o ./cf-shared-apigwv2 .
 	sam build
 
 bucket:
