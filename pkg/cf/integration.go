@@ -31,7 +31,7 @@ import (
 
 // The AWS::ApiGatewayV2::Integration resource creates a route for an API.
 type IntegrationProperties struct {
-	ApiId json.RawMessage `json:"ImportApiId,omitempty"`
+	ApiId json.RawMessage `json:"ApiId"`
 
 	// Specifies the integration's HTTP method type.
 	// For some reason it should be POST

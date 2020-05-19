@@ -33,7 +33,7 @@ type Route struct {
 }
 
 type RouteProperties struct {
-	ApiId json.RawMessage `json:"ImportApiId,omitempty"`
+	ApiId json.RawMessage `json:"ApiId"`
 
 	//For HTTP APIs, valid values are NONE for open access, or JWT for using JSON Web Tokens.
 	AuthorizationType string `json:"AuthorizationType,omitempty"`
