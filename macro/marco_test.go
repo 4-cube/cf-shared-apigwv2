@@ -1,6 +1,8 @@
-package macro
+package macro_test
 
 import (
+	"github.com/4-cube/cf-shared-apigwv2/macro"
+	"github.com/4-cube/cf-shared-apigwv2/x"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -11,9 +13,7 @@ import (
 )
 
 func TestMacro_ProcessFragment(t *testing.T) {
-	paths, err := filepath.Glob("test-templates/*-input.json")
-	assert.NoError(t, err)
-
+	paths := x.TestFilePaths("*-input.json")
 	for _, path := range paths {
 		base := filepath.Base(path)
 		t.Run(base, func(t *testing.T) {
@@ -22,8 +22,8 @@ func TestMacro_ProcessFragment(t *testing.T) {
 
 			expected, err := ioutil.ReadFile(strings.Replace(path, "-input.json", "-output.json", 1))
 
-			macro := NewMacro(fragment, logrus.New())
-			output, err := macro.ProcessFragment()
+			m := macro.NewMacro(fragment, logrus.New())
+			output, err := m.ProcessFragment()
 			assert.NoError(t, err)
 			require.NotNil(t, output)
 			assert.JSONEq(t, string(expected), string(output))

@@ -1,0 +1,23 @@
+{
+  "Type": "AWS::ApiGatewayV2::Route",
+  "DependsOn": [
+    "HelloWorldFunctionProxyRouteIntegration"
+  ],
+  "Properties": {
+    "ApiId": {
+      "Fn::ImportValue": "ImportApiId"
+    },
+    "RouteKey": "ANY /{proxy+}",
+    "Target": {
+      "Fn::Join": [
+        "/",
+        [
+          "integrations",
+          {
+            "Ref": "HelloWorldFunctionProxyRouteIntegration"
+          }
+        ]
+      ]
+    }
+  }
+}

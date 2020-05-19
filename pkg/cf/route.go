@@ -64,7 +64,7 @@ func NewRouteBuilder(fnName string, intName string, event *HttpApiEvent) Resourc
 			Properties: RouteProperties{
 				ApiId:    event.FnImportApiId(),
 				RouteKey: event.RouteKey(),
-				Target:   IntegrationTarget(intName),
+				Target:   integrationTarget(intName),
 			},
 		},
 	}
@@ -80,6 +80,6 @@ func (r *routeBuilder) Name() string {
 	return fmt.Sprintf("%s%sRoute", r.fnName, r.event.Name)
 }
 
-func IntegrationTarget(intName string) json.RawMessage {
+func integrationTarget(intName string) json.RawMessage {
 	return []byte(fmt.Sprintf(`{"Fn::Join": ["/", ["integrations", {"Ref": "%s"}]]}`, intName))
 }

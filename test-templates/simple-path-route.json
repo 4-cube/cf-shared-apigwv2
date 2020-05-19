@@ -1,0 +1,23 @@
+{
+  "Type": "AWS::ApiGatewayV2::Route",
+  "DependsOn": [
+    "HelloWorldFunctionSimplePathIntegration"
+  ],
+  "Properties": {
+    "ApiId": {
+      "Fn::ImportValue": "ImportApiId"
+    },
+    "RouteKey": "GET /hello",
+    "Target": {
+      "Fn::Join": [
+        "/",
+        [
+          "integrations",
+          {
+            "Ref": "HelloWorldFunctionSimplePathIntegration"
+          }
+        ]
+      ]
+    }
+  }
+}
