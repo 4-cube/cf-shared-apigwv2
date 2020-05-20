@@ -1,3 +1,5 @@
+![](https://github.com/4-cube/cf-shared-apigwv2/workflows/Build/badge.svg)
+
 # AWS SAM Shared Api Gateway V2 (HttpApi) macro
 
 The [AWS Serverless Application Model][sam] (SAM) defines a simplified framework
