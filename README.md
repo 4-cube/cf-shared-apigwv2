@@ -1,5 +1,5 @@
 ![](https://github.com/4-cube/cf-shared-apigwv2/workflows/Build/badge.svg)
-![](https://goreportcard.com/badge/github.com/4-cube/cf-shared-apigwv2)
+[![Go Report Card](https://goreportcard.com/badge/github.com/4-cube/cf-shared-apigwv2)](https://goreportcard.com/report/github.com/4-cube/cf-shared-apigwv2)
 
 # AWS SAM Shared Api Gateway V2 (HttpApi) macro
 
