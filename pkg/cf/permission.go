@@ -72,9 +72,9 @@ func NewPermissionBuilder(fnName string, event *HttpApiEvent) ResourceBuilder {
 			Type: "AWS::Lambda::Permission",
 			Properties: PermissionProperties{
 				Action:       "lambda:InvokeFunction",
-				FunctionName: FunctionNameRef(fnName),
+				FunctionName: functionNameRef(fnName),
 				Principal:    "apigateway.amazonaws.com",
-				SourceArn:    SourceArn(event),
+				SourceArn:    sourceArn(event),
 			},
 		},
 	}
@@ -90,11 +90,11 @@ func (p *permissionBuilder) Name() string {
 	return fmt.Sprintf("%s%sPermission", p.fnName, p.event.Name)
 }
 
-func FunctionNameRef(name string) json.RawMessage {
+func functionNameRef(name string) json.RawMessage {
 	return []byte(fmt.Sprintf(`{"Ref": "%s"}`, name))
 }
 
-func SourceArn(event *HttpApiEvent) json.RawMessage {
+func sourceArn(event *HttpApiEvent) json.RawMessage {
 	return []byte(fmt.Sprintf(`
 	{
 		"Fn::Sub": [
