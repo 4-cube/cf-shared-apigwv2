@@ -1,0 +1,49 @@
+name: Realease
+on:
+  release:
+    types: [published]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Go 1.14
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.14
+
+      - name: Download Modules
+        run: go mod download
+
+      - name: Run Tests
+        run: go test ./... -count=1 --cover -v
+
+      - name: Build
+        run: go build -ldflags="-s -w" -o ./cf-shared-apigwv2 .
+
+      - name: Get the version
+        id: tag_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+
+      - name: Package
+        uses: chriscoffee/sam-github-actions@master
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: eu-west-1
+          S3_BUCKET: ${{ secrets.S3_BUCKET }}
+        with:
+          args: package --template-file template.yaml --s3-bucket ${{ secrets.AWS_S3_SAR_BUCKET }} --s3-prefix ${{ secrets.AWS_S3_SAR_BUCKET_PREFIX }} --output-template-file packaged.yaml
+      - name: Deploy
+        uses: chriscoffee/sam-github-actions@master
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: eu-west-1
+          STACK_NAME: ${{ secrets.STACK_NAME }}
+        with:
+          args: deploy --template-file packaged.yaml --semantic-version ${{ steps.tag_version.outputs.VERSION }} --stack-name cf-shared-apigwv2 --capabilities CAPABILITY_IAM
+
+
