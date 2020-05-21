@@ -44,6 +44,6 @@ jobs:
           AWS_DEFAULT_REGION: eu-west-1
           STACK_NAME: ${{ secrets.STACK_NAME }}
         with:
-          args: deploy --template-file packaged.yaml --semantic-version ${{ steps.tag_version.outputs.VERSION }} --stack-name cf-shared-apigwv2 --capabilities CAPABILITY_IAM
+          args: publish --template packaged.yaml --semantic-version ${{ steps.tag_version.outputs.VERSION }}
 
 
