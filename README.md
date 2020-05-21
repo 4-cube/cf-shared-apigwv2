@@ -19,11 +19,10 @@ You can learn more about ClodFormation Macros [here][macro].
 ## Installation
 In order to be able to use this Macro functions, you have to install it in every region which is used for SAM Lambda
 projects.
-```shell script
-make build
-make deploy
-```
-###### There are some hardcoded values in Makefile - please review Makefile before running it.
+
+The app is installable through the [Serverless App Repository][sar]. 
+
+It's named `SharedApiGatewayV2`.
 
 
 ## Usage
@@ -80,6 +79,7 @@ The complete set of properties for the modified `HttpApi` event type are:
 | `Auth` | Type: Auth. **Currently not implemented.**                                                       |
 
 [sam]: https://github.com/awslabs/serverless-application-model
+[sar]: https://serverlessrepo.aws.amazon.com/applications/arn:aws:serverlessrepo:eu-west-1:863364574255:applications~SharedApiGatewayV2
 [gh-issue-alb]: https://github.com/awslabs/serverless-application-model/issues/721
 [gh-issue-apgw]: https://github.com/awslabs/serverless-application-model/issues/149
 [gh-issue-start-local]: https://github.com/awslabs/aws-sam-cli/issues/1641
