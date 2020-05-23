@@ -76,7 +76,7 @@ func NewIntegrationBuilder(fnName string, event *HttpApiEvent) ResourceBuilder {
 				IntegrationMethod:    "POST",
 				IntegrationType:      "AWS_PROXY",
 				IntegrationUri:       IntegrationUri(fnName),
-				PayloadFormatVersion: event.HttpApi.PayloadFormatVersion,
+				PayloadFormatVersion: payloadFormatVersion(event),
 				TimeoutInMillis:      event.HttpApi.TimeoutInMillis,
 			},
 		},
@@ -99,4 +99,11 @@ func IntegrationUri(funName string) json.RawMessage {
 		"Fn::Sub": "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${%s.Arn}/invocations"
 	}
 	`, funName))
+}
+
+func payloadFormatVersion(event *HttpApiEvent) string {
+	if event.HttpApi.PayloadFormatVersion == "" {
+		return "2.0"
+	}
+	return event.HttpApi.PayloadFormatVersion
 }
