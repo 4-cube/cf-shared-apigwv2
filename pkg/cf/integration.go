@@ -76,7 +76,7 @@ func NewIntegrationBuilder(fnName string, event *HttpApiEvent) ResourceBuilder {
 				IntegrationMethod:    "POST",
 				IntegrationType:      "AWS_PROXY",
 				IntegrationUri:       IntegrationUri(fnName),
-				PayloadFormatVersion: "2.0",
+				PayloadFormatVersion: event.HttpApi.PayloadFormatVersion,
 				TimeoutInMillis:      event.HttpApi.TimeoutInMillis,
 			},
 		},

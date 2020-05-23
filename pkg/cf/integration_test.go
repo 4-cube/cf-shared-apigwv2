@@ -39,6 +39,25 @@ func Test_IntegrationBuilder(t *testing.T) {
 			expectedName: "HelloWorldFunctionProxyRouteIntegration",
 			expectedJSON: x.LoadTestFile("simple-integration.json"),
 		},
+		{
+			name: "payload-version-1-integration.json",
+			args: args{
+				fnName: "HelloWorldFunction",
+				event: &cf.HttpApiEvent{
+					Name: "ProxyRoute",
+					HttpApi: cf.HttpApi{
+						ImportApiId:          "ImportApiId",
+						Auth:                 cf.Auth{},
+						Method:               "ANY",
+						Path:                 "/{proxy+}",
+						PayloadFormatVersion: "1.0",
+						TimeoutInMillis:      5000,
+					},
+				},
+			},
+			expectedName: "HelloWorldFunctionProxyRouteIntegration",
+			expectedJSON: x.LoadTestFile("payload-version-1-integration.json"),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

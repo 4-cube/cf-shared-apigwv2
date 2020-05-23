@@ -1,0 +1,15 @@
+{
+  "Type": "AWS::ApiGatewayV2::Integration",
+  "Properties": {
+    "ApiId": {
+      "Fn::ImportValue": "ImportApiId"
+    },
+    "IntegrationMethod": "POST",
+    "IntegrationType": "AWS_PROXY",
+    "IntegrationUri": {
+      "Fn::Sub": "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${HelloWorldFunction.Arn}/invocations"
+    },
+    "PayloadFormatVersion": "1.0",
+    "TimeoutInMillis": 5000
+  }
+}
