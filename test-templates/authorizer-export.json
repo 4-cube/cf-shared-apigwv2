@@ -1,0 +1,11 @@
+{
+  "Description": "API Gateway OauthAuthorizer",
+  "Value": {
+    "Ref": "Oauth2Authorizer"
+  },
+  "Export": {
+    "Name": {
+      "Fn::Sub": "${AWS::StackName}-Oauth2Authorizer"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "Type": "AWS::ApiGatewayV2::Authorizer",
+  "Properties": {
+    "ApiId": {
+      "Ref": "apiId"
+    },
+    "AuthorizerType": "JWT",
+    "IdentitySource": [
+      "$request.header.Authorization"
+    ],
+    "JwtConfiguration": {
+      "Audience": [
+        "audience"
+      ],
+      "Issuer": "https://cognito-idp.{region}.amazonaws.com/{userPoolId}"
+    },
+    "Name": "Oauth2Authorizer"
+  }
+}

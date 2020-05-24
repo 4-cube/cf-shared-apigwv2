@@ -1,0 +1,9 @@
+{
+  "Description": "API Gateway OauthAuthorizer Scopes",
+  "Value": "openid,email,profile,phone",
+  "Export": {
+    "Name": {
+      "Fn::Sub": "${AWS::StackName}-Oauth2AuthorizerScopes"
+    }
+  }
+}
